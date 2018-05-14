@@ -1,0 +1,17 @@
+/*body, html {
+    background:url('fond-ecran.jpg');
+    background-size:cover;
+    margin:0;
+    width:100%;
+    height:100%;
+    background-repeat:no-repeat;
+}
+
+
+#image_de_fond {
+position fixed;
+top:0%; height:100%;
+left:0; width:100%;
+-moz-background-size: cover; /* pour Firefox */ 
+/*background-size: cover; /* version standardisée */ 
+/*}*/ 
