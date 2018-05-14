@@ -1,3 +1,14 @@
+html{
+    background-image:url("fond-ecran.jpg");
+    background-size:cover;
+    background-size: 100% 100%;
+    -moz-background-size: cover; /* pour Firefox */
+    -moz-background-size: 100% 100%; /* pour Firefox */
+    -webkit-background-size: cover;/* pour Chrome et Safari */
+    -webkit-background-size: 100% 100%; /* pour Chrome et Safari */  
+    background-repeat:no-repeat;
+}
+
 /*body, html {
     background:url('fond-ecran.jpg');
     background-size:cover;
