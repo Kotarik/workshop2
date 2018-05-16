@@ -1,4 +1,4 @@
-nécéssaire d'installer python3, pip3, flask, request
+nécéssaire d'installer python3, pip, flask, request
 
 Appli vers back 
 	POST
