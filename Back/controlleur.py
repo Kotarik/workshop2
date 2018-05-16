@@ -44,7 +44,7 @@ statusPila={
 def index():
     return "Hello !"
 
-@app.route('/difficulte/<int:pila>' methods=['GET'])
+"""@app.route('/difficulte/<int:pila>' methods=['GET'])
 def difficulte():
 	for i in range(len(statusPila)):
 		if statusPila[i]['pila'] == request.args['pila']:
@@ -63,7 +63,7 @@ def difficulte():
 
 
 			#code en attente
-	"""if reponse == 0:
+	if reponse == 0:
 		#faux positif
 		#increment de l'objet json sur la variable NbRésultatNok correspondant
 		for i in range(len(retourErreur)):
