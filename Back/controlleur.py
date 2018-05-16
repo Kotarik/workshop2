@@ -42,7 +42,6 @@ statusPila={
 
 
 @app.route('/')
-@crossdomain(origin='*')
 def index():
     return "Hello !"
 
@@ -86,7 +85,6 @@ def difficulte():
 		return abort(400)"""
 
 @app.route('/reception_etat', methods=['GET', 'POST'])
-@crossdomain(origin='*')
 def reception_etat():
 	session = requests.session()
 	if request.form['etat'] == 0:
@@ -121,7 +119,6 @@ def reception_etat():
 
 
 @app.route('/reponse_alerte', methods=['POST'])
-@crossdomain(origin='*')
 def reponse_alerte():
 	if request.form['reponse'] == "0":
 		#faux positif
@@ -147,7 +144,6 @@ def reponse_alerte():
     	), 400
 
 @app.route('/pick', methods=['GET'])
-@crossdomain(origin='*')
 def pick():
 		return jsonify({'pila': pila, 'etape': etape, 'erreur': erreur}), 201
 
