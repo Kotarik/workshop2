@@ -3,18 +3,27 @@ Appli vers back
 		/reponse_alerte/0
 		/reponse_alerte/1
 			"etape": "inscription"
-			"erreur": "tête tournée"      ou   "erreur": "delai xxxs"  
+			"erreur": "tête tournée"      ou   "erreur": "delai xxxs" "
+		
+	GET
+		/difficulte/14
+			14 étant le numéro du pila
 
-back vers appli
+
 
 front vers back
 	POST
 		/reception_etat/2
+			2 état un code d'erreur ( 0 = vert, 1= orange, 2= rouge)
 			"pila": 14
 			"etape": "inscription"
 			"erreur": "tête tournée"
 
-back vers front
+		/page
+			"etape": "inscription"
+			"pila": "14
+
+
 
 openCV vers back
 
