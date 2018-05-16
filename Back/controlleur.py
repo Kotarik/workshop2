@@ -85,7 +85,7 @@ def difficulte():
 
 @app.route('/reception_etat/<int:etat>', methods=['GET', 'POST'])
 def reception_etat(etat):
-	if request.methode == 'GET' and etat == 0:
+	if request.method == 'GET' and etat == 0:
 		# pas besoin d'aide
 		return jsonify(
         	retour="pas besoin d'aide"
@@ -99,7 +99,7 @@ def reception_etat(etat):
 	elif etat == 2:
 		# besoin assistance humaine, envoi requete appli reac port 8081
 
-		request.post('http://localhost:8081/alerte', data = {'pila':request.form['pila'],'etape':request.form['etape'],'erreur': request.form['erreur']})
+		#request.post('http://localhost:8081/alerte', data = {'pila':request.form['pila'],'etape':request.form['etape'],'erreur': request.form['erreur']})
 		return jsonify(
 			
         	retour="besoin assistance humaine"
