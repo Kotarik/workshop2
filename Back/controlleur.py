@@ -4,12 +4,17 @@
 
 import cgitb; cgitb.enable()
 import requests
-from flask import Flask, request
-from flask import jsonify
+from flask import Flask, request, jsonify
 from flask_cors import CORS
 
 app = Flask(__name__)
 CORS(app)
+listeAlerte={
+	0:{
+		'alerte':0
+	}
+}
+
 retourErreur={
 	0: {
 		'etape' : "inscription",
@@ -86,19 +91,19 @@ def difficulte():
 
 @app.route('/reception_etat', methods=['GET', 'POST'])
 def reception_etat():
-	session = requests.session()
-	if request.form['etat'] == 0:
+	
+	if request.form['etat'] == "0":
 		# pas besoin d'aide
 		return jsonify(
         	retour="pas besoin d'aide"
     	), 200
   
-	elif request.form['etat'] == 1:
+	elif request.form['etat'] == "1":
 		# besoin d'une assistance non humaine
 		return jsonify(
         	retour="besoin d'une assistance non humaine"
     	), 200
-	elif request.form['etat'] == 2:
+	elif request.form['etat'] == "2":
 		# besoin assistance humaine, envoi requete appli reac port 8081
 		#je ne peux pas push chez valentine, elle doit venir chercher en variable du contenu toutes les x secondes
 		
