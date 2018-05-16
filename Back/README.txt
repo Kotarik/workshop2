@@ -1,3 +1,5 @@
+nécéssaire d'installer python3, pip3, flask, request
+
 Appli vers back 
 	POST
 		/reponse_alerte/0
