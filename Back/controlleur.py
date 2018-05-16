@@ -3,7 +3,7 @@
 ## nécéssaire d'installer python3, pip , flask, request
 
 import cgitb; cgitb.enable()
-
+import requests
 from flask import Flask, request
 from flask import jsonify
 
@@ -83,34 +83,39 @@ def difficulte():
 		#return message d'erreur bad request
 		return abort(400)"""
 
-@app.route('/reception_etat/<int:etat>', methods=['GET', 'POST'])
-def reception_etat(etat):
-	if request.method == 'GET' and etat == 0:
+@app.route('/reception_etat', methods=['GET', 'POST'])
+def reception_etat():
+	session = requests.session()
+	if request.form['etat'] == 0:
 		# pas besoin d'aide
 		return jsonify(
         	retour="pas besoin d'aide"
     	), 200
   
-	elif etat == 1:
+	elif request.form['etat'] == 1:
 		# besoin d'une assistance non humaine
 		return jsonify(
         	retour="besoin d'une assistance non humaine"
     	), 200
-	elif etat == 2:
+	elif request.form['etat'] == 2:
 		# besoin assistance humaine, envoi requete appli reac port 8081
+		#je ne peux pas push chez valentine, elle doit venir chercher en variable du contenu toutes les x secondes
+		pila=request.form['pila']
+		etape=request.form['etape']
+		erreur=request.form['erreur']
 
-		#request.post('http://localhost:8081/alerte', data = {'pila':request.form['pila'],'etape':request.form['etape'],'erreur': request.form['erreur']})
 		return jsonify(
 			
-        	retour="besoin assistance humaine"
+        	retour="besoin assistance humaine, donénes envoyé :",
+        	data = {'pila':request.form['pila'],'etape':request.form['etape'],'erreur': request.form['erreur']}
     	), 200
 	else:
 		#return message d'erreur bad request
 		return abort(400)
 
-@app.route('/reponse_alerte/<int:reponse>', methods=['POST'])
-def reponse_alerte(reponse):
-	if reponse == 0:
+@app.route('/reponse_alerte', methods=['POST'])
+def reponse_alerte():
+	if request.form['reponse'] == "0":
 		#faux positif
 		#increment de l'objet json sur la variable NbRésultatNok correspondant
 		for i in range(len(retourErreur)):
@@ -118,7 +123,7 @@ def reponse_alerte(reponse):
 				retourErreur[i]['nbResultatNok'] +=1 
 		return jsonify(retourErreur), 200
 			
-	elif reponse == 1:
+	elif request.form['reponse'] == "1":
 		# véritable problème
 		#increment de l'objet json sur la variable NbRésultatok correspondant
 		for i in range(len(retourErreur)):
@@ -128,7 +133,10 @@ def reponse_alerte(reponse):
 
 	else:
 		#return message d'erreur bad request
-		return abort(400)
+		return jsonify(
+			
+        	retour="reponse mal définit dans le post"
+    	), 400
 
 if __name__ == '__main__':
     app.run(debug=True)

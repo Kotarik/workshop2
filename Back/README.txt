@@ -2,8 +2,8 @@ nécéssaire d'installer python3, pip, flask, request
 
 Appli vers back 
 	POST
-		/reponse_alerte/0
-		/reponse_alerte/1
+		/reponse_alerte
+			"reponse": 1				ou 		"reponse": 0		0= faux positif, 1 = véritable itnervention
 			"etape": "inscription"
 			"erreur": "tête tournée"      ou   "erreur": "delai xxxs" "
 		
@@ -15,15 +15,18 @@ Appli vers back
 
 front vers back
 	POST
-		/reception_etat/2
+		/reception_etat
 			2 état un code d'erreur ( 0 = vert, 1= orange, 2= rouge)
 			"pila": 14
 			"etape": "inscription"
 			"erreur": "tête tournée"
+			"etat": 2
 
 		/page
 			"etape": "inscription"
 			"pila": "14
+
+back vers appli
 
 
 
