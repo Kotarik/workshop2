@@ -91,7 +91,9 @@ def difficulte():
 
 @app.route('/reception_etat', methods=['GET', 'POST'])
 def reception_etat():
-	
+	print("=============")
+	print(request.form)
+	print("=============")
 	if request.form['etat'] == "0":
 		# pas besoin d'aide
 		return jsonify(
