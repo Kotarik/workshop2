@@ -1,14 +1,15 @@
 #! /usr/bin/python
 # -*- coding:utf-8 -*-
-## nécéssaire d'installer python3, pip , flask, request
+## nécéssaire d'installer python3, pip , flask, requests, flask-cors
 
 import cgitb; cgitb.enable()
 import requests
 from flask import Flask, request
 from flask import jsonify
+from flask_cors import CORS
 
 app = Flask(__name__)
-
+CORS(app)
 retourErreur={
 	0: {
 		'etape' : "inscription",
