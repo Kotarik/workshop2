@@ -112,10 +112,10 @@ while True:
         shape = predictor(gray, rect)
         shape = face_utils.shape_to_np(shape)
 
-	# 
-	dist2829= round(dist.euclidean(shape[28],shape[29]))
-	dist2228= round(dist.euclidean(shape[22], shape[28]))
-	dist2028= round(dist.euclidean(shape[20], shape[28]))
+        # 
+        dist2829= round(dist.euclidean(shape[28],shape[29]))
+        dist2228= round(dist.euclidean(shape[22], shape[28]))
+        dist2028= round(dist.euclidean(shape[20], shape[28]))
 
         # frame = face_utils.visualize_facial_landmarks(frame, shape)
 
@@ -179,9 +179,9 @@ while True:
         cv2.putText(frame, "Distance nose : %s " % str(dist_nose), (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
         cv2.putText(frame, "Distance eyebrow : %s " % str(dist_eyebrow), (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
         cv2.putText(frame, "Ratio : %s " % str(ratio_eyebrow), (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
-	cv2.putText(frame, "Distance 20/28 %s " % str(dist2028), (10, 270), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
-	cv2.putText(frame, "Distance 22/28 %s " % str(dist2228), (10, 300), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
-	cv2.putText(frame, "Distance 28/29 %s " % str(dist2829), (10, 330), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+        cv2.putText(frame, "Distance 20/28 %s " % str(dist2028), (10, 270), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+        cv2.putText(frame, "Distance 22/28 %s " % str(dist2228), (10, 300), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+        cv2.putText(frame, "Distance 28/29 %s " % str(dist2829), (10, 330), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
 
 
         # Calculate EAR
@@ -192,18 +192,18 @@ while True:
         ear = (leftEAR + rightEAR) / 2.0
         cv2.putText(frame, "EAR: {:.2f}".format(ear), (10, 120), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
 
-	# Calculate ratio
-	ratio20 = round(dist2028 / dist2829, 5)
-	ratio22 = round(dist2228 / dist2829, 5)
-	cv2.putText(frame, "ratio20 %s " % str(ratio20), (10, 390), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
-	cv2.putText(frame, "ratio22 %s " % str(ratio22), (10, 420), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+        # Calculate ratio
+        ratio20 = round(dist2028 / dist2829, 5)
+        ratio22 = round(dist2228 / dist2829, 5)
+        cv2.putText(frame, "ratio20 %s " % str(ratio20), (10, 390), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+        cv2.putText(frame, "ratio22 %s " % str(ratio22), (10, 420), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
 
         # Alert when surprise
         if ratio_eyebrow >= EYEBROW_RATIO and ear >= EYE_RATIO:
             counter += 1
             if counter >= FRAME_NB:
                 cv2.putText(frame, "Surpis !", (10, 180), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
-		requests.post('http://127.0.0.1:5000/emotion',data={'emotion':'surpris', 'pila': pilanumber})
+                requests.post('http://127.0.0.1:5000/emotion',data={'emotion':'surpris', 'pila': pilanumber})
         else:
             counter = 0
 
@@ -220,23 +220,23 @@ while True:
 
         # Alert when head turn
         if angle < 90 - TURN_HEAD or angle > 90 + TURN_HEAD:
-	    dureeAlerteTete+=1
+            dureeAlerteTete+=1
             cv2.putText(frame, "Head turn ! %s" % dureeAlerteTete, (10, 240), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
-	    
-	else:
-	    dureeAlerteTete=0
-	if dureeAlerteTete==5:	
-		requests.post('http://127.0.0.1:5000/emotion',data={'emotion':'headturn', 'pila': pilanumber})
+            
+        else:
+            dureeAlerteTete=0
+        if dureeAlerteTete==5:
+                requests.post('http://127.0.0.1:5000/emotion',data={'emotion':'headturn', 'pila': pilanumber})
 
-	# Alert when concentre
+        # Alert when concentre
         if ratio20 < EYEBROW_RATIO_CONCENTRE:
-	    dureeAlerteConcentre+=1
+            dureeAlerteConcentre+=1
             cv2.putText(frame, "Concentre ! %s" % dureeAlerteConcentre, (10, 450), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
-	    
-	else:
-	    dureeAlerteConcentre=0
-	if dureeAlerteConcentre==5:	
-		requests.post('http://127.0.0.1:5000/emotion',data={'emotion':'concentre', 'pila': pilanumber})
+            
+        else:
+            dureeAlerteConcentre=0
+        if dureeAlerteConcentre==5:
+                requests.post('http://127.0.0.1:5000/emotion',data={'emotion':'concentre', 'pila': pilanumber})
 
     # Show the frame
     cv2.imshow("Frame", frame)
