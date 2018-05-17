@@ -7,6 +7,7 @@ import requests
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 
+
 app = Flask(__name__)
 CORS(app)
 listeAlerte={
@@ -89,11 +90,8 @@ def difficulte():
 		#return message d'erreur bad request
 		return abort(400)"""
 
-@app.route('/reception_etat', methods=['GET', 'POST'])
+@app.route('/reception_etat', methods=['POST'])
 def reception_etat():
-	print("=============")
-	print(request.form)
-	print("=============")
 	if request.form['etat'] == "0":
 		# pas besoin d'aide
 		return jsonify(
@@ -122,6 +120,9 @@ def reception_etat():
 		#return message d'erreur bad request
 		return abort(400)
 
+@app.route('/alerte', methods=['GET'])
+def pick():
+		return jsonify({'pila': pila, 'etape': etape}), 201
 
 
 
@@ -150,9 +151,6 @@ def reponse_alerte():
         	retour="reponse mal définit dans le post"
     	), 400
 
-@app.route('/pick', methods=['GET'])
-def pick():
-		return jsonify({'pila': pila, 'etape': etape, 'erreur': erreur}), 201
 
 if __name__ == '__main__':
     app.run(debug=True)
