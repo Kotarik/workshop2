@@ -67,6 +67,9 @@ EYE_RATIO = 0.31
 FRAME_NB= 6
 EYEBROW_RATIO_CONCENTRE = 2.8
 
+dureeAlerteTete = 0
+dureeAlerteConcentre = 0
+
 # Eye part
 (lStart, lEnd) = face_utils.FACIAL_LANDMARKS_IDXS["left_eye"]
 (rStart, rEnd) = face_utils.FACIAL_LANDMARKS_IDXS["right_eye"]
@@ -93,9 +96,6 @@ def eye_aspect_ratio(eye):
 def dist_points(pts_a, pts_b):
     # Calcul distance between two points
     return sqrt((pts_b[0] - pts_a[0]) ** 2 + (pts_b[1] - pts_a[1]) ** 2)
-
-dureeAlerteTete = 0
-dureeAlerteConcentre = 0
 
 while True:
     # Get frame
@@ -195,15 +195,16 @@ while True:
         # Calculate ratio
         ratio20 = round(dist2028 / dist2829, 5)
         ratio22 = round(dist2228 / dist2829, 5)
-        cv2.putText(frame, "ratio20 %s " % str(ratio20), (10, 390), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
-        cv2.putText(frame, "ratio22 %s " % str(ratio22), (10, 420), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+        cv2.putText(frame, "ratio20 : %s" % str(ratio20), (10, 390), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+        cv2.putText(frame, "ratio22 : %s" % str(ratio22), (10, 420), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
 
         # Alert when surprise
         if ratio_eyebrow >= EYEBROW_RATIO and ear >= EYE_RATIO:
             counter += 1
             if counter >= FRAME_NB:
-                cv2.putText(frame, "Surpis !", (10, 180), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
-                requests.post('http://127.0.0.1:5000/emotion',data={'emotion':'surpris', 'pila': pilanumber})
+                cv2.putText(frame, "Surprise !", (10, 180), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+                # requests.post('http://127.0.0.1:5000/emotion', data={'emotion':'surpris', 'pila': pilanumber})
+                print("{'emotion':'surpris', 'pila': pilanumber}")
         else:
             counter = 0
 
@@ -220,23 +221,25 @@ while True:
 
         # Alert when head turn
         if angle < 90 - TURN_HEAD or angle > 90 + TURN_HEAD:
-            dureeAlerteTete+=1
+            dureeAlerteTete += 1
             cv2.putText(frame, "Head turn ! %s" % dureeAlerteTete, (10, 240), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
             
         else:
-            dureeAlerteTete=0
-        if dureeAlerteTete==5:
-                requests.post('http://127.0.0.1:5000/emotion',data={'emotion':'headturn', 'pila': pilanumber})
+            dureeAlerteTete = 0
+        if dureeAlerteTete == 5:
+            # requests.post('http://127.0.0.1:5000/emotion', data={'emotion':'headturn', 'pila': pilanumber})
+            print("{'emotion':'headturn', 'pila': pilanumber}")
 
         # Alert when concentre
         if ratio20 < EYEBROW_RATIO_CONCENTRE:
-            dureeAlerteConcentre+=1
+            dureeAlerteConcentre += 1
             cv2.putText(frame, "Concentre ! %s" % dureeAlerteConcentre, (10, 450), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
             
         else:
-            dureeAlerteConcentre=0
-        if dureeAlerteConcentre==5:
-                requests.post('http://127.0.0.1:5000/emotion',data={'emotion':'concentre', 'pila': pilanumber})
+            dureeAlerteConcentre = 0
+        if dureeAlerteConcentre == 5:
+            # requests.post('http://127.0.0.1:5000/emotion', data={'emotion':'concentre', 'pila': pilanumber})
+            print("{'emotion':'concentre', 'pila': pilanumber}")
 
     # Show the frame
     cv2.imshow("Frame", frame)
