@@ -187,8 +187,8 @@ def emotions():
 		return jsonify(
         	retour="surpris"
     	), 200
-    elif request.form['emotion'] == "headturn":
-    	variables["emotion"]=request.form['emotion']
+	elif request.form['emotion'] == "headturn":
+		variables["emotion"]=request.form['emotion']
 		variables["pila"]=request.form['pila']
 		print(variables["emotion"], variables["pila"])
 		return jsonify(
