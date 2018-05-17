@@ -124,3 +124,6 @@ tags
 
 
 # End of https://www.gitignore.io/api/vim,opencv,python
+#
+
+config.json

@@ -14,13 +14,19 @@ import time
 import dlib
 import cv2
 import requests
+import json
+
+with open('config.json') as f:
+    config = json.load(f)
 
 # Arguments
 ap = argparse.ArgumentParser()
 ap.add_argument("-p", "--shape-predictor", required=True,
-    help="path to facial landmark predictor")
+    help="Path to facial landmark predictor")
+ap.add_argument("-n", "--no-request", action='store_true',
+    help="No request action")
 args = vars(ap.parse_args())
- 
+
 # Initialize facial landmark predictor
 print("[INFO] loading facial landmark predictor...")
 detector = dlib.get_frontal_face_detector()
@@ -32,43 +38,23 @@ vs = VideoStream().start()
 time.sleep(1.0)
 
 # Part face
-face = {
-    "right_eyebrow": {
-        "pts": (17, 22),
-        "pts_list": {}
-    },
-    "left_eyebrow": {
-        "pts": (22, 27),
-        "pts_list": {}
-    },
-    "nose": {
-        "pts": (27, 31),
-        "pts_list": {}
-    },
-    "eyebrow": {
-    },
-    "right_eye": {
-        "pts": (36, 42),
-        "pts_list": {}
-    },
-    "left_eye": {
-        "pts": (42, 48),
-        "pts_list": {}
-    },
-}
+face = config['face']
 
-#Pila number
-pilanumber = 1
+# Pila number
+pila_nb = config['pila_nb']
 
 # Ratio eyebrow / nose
-EYEBROW_RATIO = 0.52
-# Ratio eye
-EYE_RATIO = 0.31
-FRAME_NB= 6
-EYEBROW_RATIO_CONCENTRE = 2.8
+RATIO_EYE = config['ratio']['eye']
+RATIO_EYEBROW_SURPRISE = config['ratio']['eyebrow_surprise']
+RATIO_EYEBROW_FOCUS = config['ratio']['eyebrow_focus']
 
-dureeAlerteTete = 0
-dureeAlerteConcentre = 0
+# Frame count
+FRAME_NB = config['frame_nb']
+
+# Degrees for head turn
+TURN_HEAD = config['turn_head']
+
+URL = config['url']
 
 # Eye part
 (lStart, lEnd) = face_utils.FACIAL_LANDMARKS_IDXS["left_eye"]
@@ -76,9 +62,9 @@ dureeAlerteConcentre = 0
 
 # Counter for surprise
 counter = 0
+time_alarm_turn = 0
+time_alarm_focus = 0
 
-# Degrees for head turn
-TURN_HEAD = 13
 
 def eye_aspect_ratio(eye):
     # Distances between vertical eye landmarks
@@ -112,10 +98,9 @@ while True:
         shape = predictor(gray, rect)
         shape = face_utils.shape_to_np(shape)
 
-        # 
-        dist2829= round(dist.euclidean(shape[28],shape[29]))
-        dist2228= round(dist.euclidean(shape[22], shape[28]))
-        dist2028= round(dist.euclidean(shape[20], shape[28]))
+        dist2829 = round(dist.euclidean(shape[28],shape[29]))
+        dist2228 = round(dist.euclidean(shape[22], shape[28]))
+        dist2028 = round(dist.euclidean(shape[20], shape[28]))
 
         # frame = face_utils.visualize_facial_landmarks(frame, shape)
 
@@ -199,12 +184,26 @@ while True:
         cv2.putText(frame, "ratio22 : %s" % str(ratio22), (10, 420), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
 
         # Alert when surprise
-        if ratio_eyebrow >= EYEBROW_RATIO and ear >= EYE_RATIO:
+        if ratio_eyebrow >= RATIO_EYEBROW_SURPRISE and ear >= RATIO_EYE:
             counter += 1
             if counter >= FRAME_NB:
                 cv2.putText(frame, "Surprise !", (10, 180), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
-                # requests.post('http://127.0.0.1:5000/emotion', data={'emotion':'surpris', 'pila': pilanumber})
-                print("{'emotion':'surpris', 'pila': pilanumber}")
+                if args['no_request']:
+                    print('===============================')
+                    print('No request !')
+                    print('Emotion : supris')
+                    print('Pila : %s' % pila_nb)
+                    print('===============================')
+                else:
+                    data = {
+                        'emotion': 'surpris',
+                        'pila': pila_nb
+                    }
+                    print('=============================')
+                    print('Request : %s' % URL)
+                    print('Data : %s' % data)
+                    print('=============================')
+                    requests.post('%s/emotion' % URL, data=data)
         else:
             counter = 0
 
@@ -221,25 +220,57 @@ while True:
 
         # Alert when head turn
         if angle < 90 - TURN_HEAD or angle > 90 + TURN_HEAD:
-            dureeAlerteTete += 1
-            cv2.putText(frame, "Head turn ! %s" % dureeAlerteTete, (10, 240), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
-            
+            time_alarm_turn += 1
+            cv2.putText(frame, "Head turn ! %s" % time_alarm_turn, (10, 240), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
         else:
-            dureeAlerteTete = 0
-        if dureeAlerteTete == 5:
-            # requests.post('http://127.0.0.1:5000/emotion', data={'emotion':'headturn', 'pila': pilanumber})
-            print("{'emotion':'headturn', 'pila': pilanumber}")
+            time_alarm_turn = 0
+
+        if time_alarm_turn == 5:
+            if args['no_request']:
+                print('===============================')
+                print('No request !')
+                print('Emotion : headturn')
+                print('Pila : %s' % pila_nb)
+                print('===============================')
+            else:
+                data = {
+                    'emotion': 'headturn',
+                    'pila': pila_nb
+                }
+                print('=============================')
+                print('Request : %s' % URL)
+                print('Data : %s' % data)
+                print('=============================')
+                requests.post('%s/emotion' % URL, data=data)
+        else:
+            pass
 
         # Alert when concentre
-        if ratio20 < EYEBROW_RATIO_CONCENTRE:
-            dureeAlerteConcentre += 1
-            cv2.putText(frame, "Concentre ! %s" % dureeAlerteConcentre, (10, 450), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
-            
+        if ratio20 < RATIO_EYEBROW_FOCUS:
+            time_alarm_focus += 1
+            cv2.putText(frame, "Concentre ! %s" % time_alarm_focus, (10, 450), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
         else:
-            dureeAlerteConcentre = 0
-        if dureeAlerteConcentre == 5:
-            # requests.post('http://127.0.0.1:5000/emotion', data={'emotion':'concentre', 'pila': pilanumber})
-            print("{'emotion':'concentre', 'pila': pilanumber}")
+            time_alarm_focus = 0
+
+        if time_alarm_focus == 5:
+            if args['no_request']:
+                print('===============================')
+                print('No request !')
+                print('Emotion : concentre')
+                print('Pila : %s' % pila_nb)
+                print('===============================')
+            else:
+                data = {
+                    'emotion': 'concentre',
+                    'pila': pila_nb
+                }
+                print('=============================')
+                print('Request : %s' % URL)
+                print('Data : %s' % data)
+                print('=============================')
+                requests.post('%s/emotion' % URL, data=data)
+        else:
+            pass
 
     # Show the frame
     cv2.imshow("Frame", frame)
