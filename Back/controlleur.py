@@ -1,14 +1,16 @@
 #! /usr/bin/python
 # -*- coding:utf-8 -*-
-## nécéssaire d'installer python3, pip , flask, requests, flask-cors
+## nécéssaire d'installer python3, pip , flask, requests, flask-cors, flask-talisman
 
 import cgitb; cgitb.enable()
 import requests
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+from flask_talisman import Talisman
 
 app = Flask(__name__)
 CORS(app)
+talisman = Talisman(app)
 
 array = []
 
@@ -21,42 +23,7 @@ variables={
 
 #Json rempli manuellement pour le moment, mais qui devrait se remplir automatiquement par la suite
 retourErreur={
-	0: {
-		'etape' : "inscription",
-		'emotion' : "surpris",
-		'erreur' : "null",
-		'nbResultatOk' : 0,
-		'nbResultatNok' : 0
-		},
-	1: {
-		'etape' : "inscription",
-		'emotion' : "concentré",
-		'erreur' : "null",
-		'nbResultatOk' : 0,
-		'nbResultatNok' : 0
-		},
-	
-	2: {
-		'etape': "inscription",
-		'emotion' : "null",
-		'erreur' : "demande_aide",
-		'nbResultatOk' : 0,
-		'nbResultatNok' : 0
-		},
-	3: {
-		'etape' : "inscription",
-		'emotion' : "headturn",
-		'erreur' : "null",
-		'nbResultatOk' : 0,
-		'nbResultatNok' : 0
-		},
-	2: {
-		'etape': "inscription",
-		'emotion' : "null",
-		'erreur' : "delai_30s",
-		'nbResultatOk' : 0,
-		'nbResultatNok' : 0
-		}
+
 	}
 
 #Json utilisé pour la route /difficulte en cours de developpement
@@ -83,6 +50,8 @@ def index():
 
 
 @app.route('/reception_etat', methods=['POST'])
+#sécurisation du code en https avec flask-talisman
+@talisman(force_https=True)
 def reception_etat():
 	#fonction permetant au site pole emploi d'envoyer au backend l'état d'une borne pila.
 	if request.form['etat'] == "0":
@@ -99,24 +68,40 @@ def reception_etat():
 	elif request.form['etat'] == "2":
 		# besoin assistance humaine, stockage des données pour envoi ultérieur vers l'application smartphone
 		
-		#Stockage en variable pour traitement ultérieur
-		variables["pila"]=request.form['pila']
-		variables["etape"]=request.form['etape']
-		variables["erreur"]=request.form['erreur']
+		variables["pila"] = int(request.form['pila'])
+		pila_nb = int(request.form['pila'])
+		# Si la clé pila existe dans le dictionnaire json retourErreur
+		if pila_nb in retourErreur.keys():
+			# On créer une sous clé erreur vide
+			retourErreur[pila_nb]['erreur'] = None
+			retourErreur[pila_nb]['etape'] = None
+		else:
+			# Sinon on créer la clé pila puis sa sous valeur emotion vide
+			retourErreur[pila_nb] = dict()
+			retourErreur[pila_nb]['erreur'] = None
+			retourErreur[pila_nb]['etape'] = None
 
-		#Remplissage de l'array avec les bornes pila en erreur, et l'étape de l'erreur
-		array.append({'pila':variables["pila"],'etape':variables["etape"]})
+		if request.form['erreur'] in ["demande_aide", "delai_30s", "delai_60s"]:
+			# On le récupère dans le body de la requete post
+			variables["erreur"] = request.form['erreur']
 
-		return jsonify(
-			
-        	retour="besoin assistance humaine, données envoyé :",
-        	data = {'pila':request.form['pila'],'etape':request.form['etape'],'erreur': request.form['erreur']}
-    	), 200
-	else:
-		#return message d'erreur bad request
-		return abort(400)
+		if request.form['etape'] in ["inscription", "actualisation"]:
+			variables["etape"] = request.form['etape']
+
+			# On rempli le tableau qui sera transmi à l'application smartphone
+			retourErreur[pila_nb]['erreur'] = variables["erreur"]
+			retourErreur[pila_nb]['etape'] = variables["etape"]
+			return jsonify(
+	        	retourErreur
+	    	), 200
+		else: 
+			return jsonify(
+	        	retour = "mauvaise emotion"
+	    	), 400
 
 @app.route('/alerte', methods=['GET'])
+#sécurisation du code en https avec flask-talisman
+@talisman(force_https=True)
 def alerte():
 	#fonction permetant à l'application smartphone de venir chercher les bornes en erreur listé dans l'array
 		return jsonify(array), 201
@@ -124,8 +109,10 @@ def alerte():
 
 
 @app.route('/reponse_alerte', methods=['POST'])
+#sécurisation du code en https avec flask-talisman
+@talisman(force_https=True)
 def reponse_alerte():
-	#fonction permettant de valider la bonne information de l'erreur, ou de renseigner l'erreur en tant que faux-positif à des fin d'amélioration manuelle de la détection.
+	#fonction permettant au conseiller de valider depuis son application smartphone la bonne information de l'erreur, ou de renseigner l'erreur en tant que faux-positif à des fin d'amélioration manuelle de la détection.
 	if request.form['reponse'] == "0":
 		#L'intervention du conseiller pole emploi est un faux positif
 		#increment de l'objet json sur la variable NbRésultatNok correspondant
@@ -137,7 +124,8 @@ def reponse_alerte():
 				request.form['etape'] = None
 			else:
 				#Sinon si l'étape et l'erreur du body ou si l'étape et l'émotion du body de la requete correspondent à une ligne du json déjà créé
-				if (retourErreur[i]['etape'] == request.form['etape'] and retourErreur[i]['erreur'] == variables["erreur"]) or (retourErreur[i]['etape'] == request.form['etape'] and retourErreur[i]['emotion'] == variables["emotion"]):
+				if retourErreur[i]['etape'] == request.form['etape']:
+
 					#alors on incrémente la variable indiquant que c'est un faux positif
 					retourErreur[i]['nbResultatNok'] +=1
 					#On vide la ligne d'erreur correspondante dans l'array qui est envoyé à l'application smartphone
@@ -166,6 +154,7 @@ def reponse_alerte():
 					array.remove({'pila':variables["pila"],'etape':variables["etape"]})
 					#On vide les variables
 					variables["emotion"]=None
+
 					variables["erreur"]=None
 					variables["pila"]=None
 					variables["etape"]=None	
@@ -178,73 +167,33 @@ def reponse_alerte():
 
 
 @app.route('/emotion', methods=['POST'])
+#sécurisation du code en https avec flask-talisman
+@talisman(force_https=True)
+# Le traitement OpenCV envoi ici les émotions
 def emotions():
-	if request.form['emotion'] == "concentre":
-		variables["emotion"]=request.form['emotion']
-		variables["pila"]=request.form['pila']
-		array.append({'pila':variables["pila"],'etape':None})
-		print(variables["emotion"], variables["pila"])
+	variables["pila"] = int(request.form['pila'])
+	pila_nb = int(request.form['pila'])
+	# Si la clé pila existe dans le dictionnaire json retourErreur
+	if pila_nb in retourErreur.keys():
+		# On créer une sous clé emotion vide
+		retourErreur[pila_nb]['emotion'] = None
+	else:
+		# Sinon on créer la clé pila puis sa sous valeur emotion vide
+		retourErreur[pila_nb] = dict()
+		retourErreur[pila_nb]['emotion'] = None
+
+	if request.form['emotion'] in ["concentre", "surpris", "headturn"]:
+		# On le récupère dans le body de la requete post
+		variables["emotion"] = request.form['emotion']
+		# On rempli le tableau qui sera transmi à l'application smartphone
+		retourErreur[pila_nb]['emotion'] = variables["emotion"]
+
+		return jsonify(retourErreur), 200
+	else: 
 		return jsonify(
-        	retour="concentre"
-    	), 200
-	elif request.form['emotion'] == "surpris":
-		variables["emotion"]=request.form['emotion']
-		variables["pila"]=request.form['pila']
-		print(variables["emotion"], variables["pila"])
-		return jsonify(
-        	retour="surpris"
-    	), 200
-	elif request.form['emotion'] == "headturn":
-		variables["emotion"]=request.form['emotion']
-		variables["pila"]=request.form['pila']
-		print(variables["emotion"], variables["pila"])
-		return jsonify(
-        	retour="headturn"
-    	), 200
-	else : 
-		return jsonify(
-        	retour="mauvaise emotion"
+        	retour = "mauvaise emotion"
     	), 400
 
-"""@app.route('/difficulte/<int:pila>' methods=['GET'])
-def difficulte():
-	for i in range(len(statusPila)):
-		if statusPila[i]['pila'] == request.args['pila']:
-			etapePila=statusPila[i]['etape']
-			#comparaison avec openCV du status de l'utilisateur
-			#attente réponse
-				#si pas de pb, on vire les données stocké temporairment
-				#si problèmene, on enregistre les données OpenCV en base (json retourErreur )
-		else:
-			return jsonify(
-        		retour="Numero pila non trouvé en base"
-    			), 400
-
-
-
-
-
-			#code en attente
-	if reponse == 0:
-		#faux positif
-		#increment de l'objet json sur la variable NbRésultatNok correspondant
-		for i in range(len(retourErreur)):
-			if retourErreur[i]['etape'] == request.form['etape'] and retourErreur[i]['erreur'] == request.form['erreur']:
-				retourErreur[i]['nbResultatNok'] +=1 
-		return jsonify(retourErreur), 200
-			
-	elif reponse == 1:
-		# véritable problème
-		#increment de l'objet json sur la variable NbRésultatok correspondant
-		for i in range(len(retourErreur)):
-			if retourErreur[i]['etape'] == request.form['etape'] and retourErreur[i]['erreur'] == request.form['erreur']:
-				retourErreur[i]['nbResultatOk'] +=1 	
-		return jsonify(retourErreur), 200
-
-	else:
-		#return message d'erreur bad request
-		return abort(400)"""
-
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, host='0.0.0.0')
 
