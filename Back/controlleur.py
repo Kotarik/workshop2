@@ -153,10 +153,12 @@ def reponse_alerte():
 @app.route('/emotion', methods=['POST'])
 def emotion():
 	if request.form['emotion'] == "concentre":
+		print(request.form['emotion'])
 		return jsonify(
         	retour="concentre"
     	), 200
 	elif request.form['emotion'] == "surpris":
+		print(request.form['emotion'])
 		return jsonify(
         	retour="surpris"
     	), 200
