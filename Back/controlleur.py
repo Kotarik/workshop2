@@ -53,7 +53,7 @@ retourErreur={
 	2: {
 		'etape': "inscription",
 		'emotion' : "null",
-		'erreur' : "delai_60s",
+		'erreur' : "delai_30s",
 		'nbResultatOk' : 0,
 		'nbResultatNok' : 0
 		}
