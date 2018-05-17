@@ -5,11 +5,12 @@ Appli vers back
 		/reponse_alerte
 			"reponse": 1				ou 		"reponse": 0		0= faux positif, 1 = véritable itnervention
 			"etape": "inscription"
-			"erreur": "tête tournée"      ou   "erreur": "delai xxxs" "
+			"erreur": "tête tournée"      ou   "erreur": "delai xxxs" 
 		
 	GET
 		/difficulte/14
 			14 étant le numéro du pila
+		/alerte
 
 
 
