@@ -102,7 +102,9 @@ def reception_etat():
 
 @app.route('/alerte', methods=['GET'])
 def alerte():
-		return jsonify({'pila': variables["pila"], 'etape': variables["etape"]}), 201
+		array = []
+		array.append({'pila':variables["pila"],'etape':variables["etape"]})
+		return jsonify(array), 201
 
 
 
