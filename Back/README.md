@@ -1,36 +1,70 @@
-nécéssaire d'installer python3, pip, flask, requests, flask-cors, flask-talisman
+## Dépendances
 
-Appli vers back 
-	POST
-		/reponse_alerte
-			"reponse": 1				ou 		"reponse": 0		0= faux positif, 1 = véritable itnervention
-			"etape": "inscription"
-			"erreur": "tête tournée"      ou   "erreur": "delai xxxs" 
-		
-	GET
-		/difficulte/14
-			14 étant le numéro du pila
-		/alerte
+- python3
+- python3-requests
+- python3-flask
+- python3-flask-cors
+- python3-flask-talisman
 
+Via apt :
 
+- python3
+- python3-setuptools
+- python3-pip
 
-front vers back
-	POST
-		/reception_etat
-			2 état un code d'erreur ( 0 = vert, 1= orange, 2= rouge)
-			"pila": 14
-			"etape": "inscription"
-			"erreur": "tête tournée"
-			"etat": 2
+Via pip3 :
 
-		/page
-			"etape": "inscription"
-			"pila": "14
-
-back vers appli
+- requests
+- flask
+- flask-cors
+- flask-talisman
 
 
+## API
 
-openCV vers back
+## ```/emotion```
 
-back vers OpenCV
+### POST
+
+Permet de remonter une émotion facial de la borne PILA vers le backend.
+
+Entrée :
+~~~python
+{"emotion": "surpris", "pila": 1}
+~~~
+
+
+## ```/reception_etat```
+
+### POST
+
+Permet de remonter une erreur du frontend de la borne PILA vers le backend
+
+Entrée :
+~~~python
+{"erreur": "demande_aide", "pila": 1, "etat": 2}
+~~~
+
+
+## ```/alerte```
+
+### GET
+
+Permet de récupérer la liste des bornes PILA ayant une émotion et / ou une erreur de déclaré.
+
+Sortie :
+~~~python
+[{'pila' : 1}, {"pila": 2}]
+~~~
+
+
+## ```/reponse_alerte```
+
+### POST
+
+Permet de signaler un faux-positif ou non pour une erreur et / ou émotion.
+
+Entrée :
+~~~python
+{"reponse": 0, "pila": 1}
+~~~
