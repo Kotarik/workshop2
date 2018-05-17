@@ -121,7 +121,7 @@ def reception_etat():
 		return abort(400)
 
 @app.route('/alerte', methods=['GET'])
-def pick():
+def alerte():
 		return jsonify({'pila': pila, 'etape': etape}), 201
 
 
@@ -146,11 +146,24 @@ def reponse_alerte():
 
 	else:
 		#return message d'erreur bad request
-		return jsonify(
-			
-        	retour="reponse mal définit dans le post"
-    	), 400
+		return jsonify(retour="reponse mal définit dans le post"), 400
 
+
+
+@app.route('/emotion', methods=['POST'])
+def emotion():
+	if request.form['emotion'] == "concentre":
+		return jsonify(
+        	retour="concentre"
+    	), 200
+	elif request.form['emotion'] == "surpris":
+		return jsonify(
+        	retour="surpris"
+    	), 200
+	else : 
+		return jsonify(
+        	retour="mauvaise emotion"
+    	), 400
 
 if __name__ == '__main__':
     app.run(debug=True)
