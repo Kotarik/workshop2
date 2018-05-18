@@ -1,0 +1,36 @@
+{
+  "face": {
+    "right_eyebrow": {
+      "pts": [17, 22],
+      "pts_list": {}
+    },
+    "left_eyebrow": {
+      "pts": [22, 27],
+      "pts_list": {}
+    },
+    "nose": {
+      "pts": [27, 31],
+      "pts_list": {}
+    },  
+    "eyebrow": {},
+    "right_eye": {
+      "pts": [36, 42],
+      "pts_list": {}
+    },  
+    "left_eye": {
+      "pts": [42, 48],
+      "pts_list": {}
+    }
+  },
+
+  "pila_nb": 1,
+
+  "ratio": {
+    "eye": 0.31,
+    "eyebrow_surprise": 0.52,
+    "eyebrow_focus": 2.8
+  },
+  "frame_nb": 6,
+  "turn_head": 13,
+  "url": "http://127.0.0.1:5000/"
+}
