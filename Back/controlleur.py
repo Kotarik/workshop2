@@ -60,6 +60,7 @@ def reception_etat():
 @app.route('/alerte', methods=['GET'])
 #sécurisation du code en https avec flask-talisman
 @talisman(force_https=True)
+# Fonction permettant de remplir la liste des Borne pila en erreur
 def alerte():
 	list_pila = []
 
@@ -77,6 +78,7 @@ def alerte():
 @app.route('/reponse_alerte', methods=['POST'])
 #sécurisation du code en https avec flask-talisman
 @talisman(force_https=True)
+# Fonction permettant au conseiller de valider depuis son application smartphone la bonne information de l'erreur, ou de renseigner l'erreur en tant que faux-positif à des fin d'amélioration manuelle de la détection. 
 def reponse_alerte():
 	pila_nb = int(request.form['pila'])
 
@@ -104,19 +106,23 @@ def reponse_alerte():
 		else:
 			pass
 
-	# Fonction permettant au conseiller de valider depuis son application smartphone la bonne information de l'erreur, ou de renseigner l'erreur en tant que faux-positif à des fin d'amélioration manuelle de la détection.
+	
 	# Si reponse = 0 L'intervention du conseiller pole emploi est un faux positif
 	if request.form['reponse'] == "0":
 		if erreur is not None:
 			retourErreur[erreur]['nbResultatNok'] += 1
 		if emotion is not None:
 			retourErreur[emotion]['nbResultatNok'] += 1
-	else:
+	# Sinon reponse = 1 L'intervention du conseiller pole emploi est une vrai erreur
+	elif request.form['reponse'] == "1":
 		if erreur is not None:
 			retourErreur[erreur]['nbResultatOk'] += 1
 		if emotion is not None:
 			retourErreur[emotion]['nbResultatOk'] += 1
-
+	else:
+		return jsonify(
+		retour = "erreur dans la réponse envoyé"
+		), 400
 	del retourErreur[int(request.form['pila'])]
 
 	return jsonify(
