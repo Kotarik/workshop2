@@ -25,6 +25,8 @@ ap.add_argument("-p", "--shape-predictor", required=True,
     help="Path to facial landmark predictor")
 ap.add_argument("-n", "--no-request", action='store_true',
     help="No request action")
+ap.add_argument("-f", "--face", action='store_true',
+    help="Print face !")
 args = vars(ap.parse_args())
 
 # Initialize facial landmark predictor
@@ -56,15 +58,20 @@ TURN_HEAD = config['turn_head']
 
 URL = config['url']
 
+FONT = cv2.FONT_HERSHEY_SIMPLEX
+
 # Eye part
 (lStart, lEnd) = face_utils.FACIAL_LANDMARKS_IDXS["left_eye"]
 (rStart, rEnd) = face_utils.FACIAL_LANDMARKS_IDXS["right_eye"]
 
 # Counter for surprise
-counter = 0
+time_alarm_surpris = 0
 time_alarm_turn = 0
 time_alarm_focus = 0
 
+request_surpris = True 
+request_turn = False
+request_focus = False
 
 def eye_aspect_ratio(eye):
     # Distances between vertical eye landmarks
@@ -79,9 +86,25 @@ def eye_aspect_ratio(eye):
 
     return ear
 
-def dist_points(pts_a, pts_b):
-    # Calcul distance between two points
-    return sqrt((pts_b[0] - pts_a[0]) ** 2 + (pts_b[1] - pts_a[1]) ** 2)
+def measure_angle(pts_a, pts_b, pts_c):
+    a = dist.euclidean(pts_a, pts_b)
+    b = dist.euclidean(pts_b, pts_c)
+    c = dist.euclidean(pts_c, pts_a)
+    return degrees(acos((a ** 2 + b ** 2 - c ** 2) / (2 * a * b)))
+
+def cal_ear():
+    leftEye = shape[lStart:lEnd]
+    rightEye = shape[rStart:rEnd]
+    leftEAR = eye_aspect_ratio(leftEye)
+    rightEAR = eye_aspect_ratio(rightEye)
+    return round((leftEAR + rightEAR) / 2.0, 3)
+
+def center_ligne(pt1, pt2):
+    pt1 = face['right_eyebrow']['barycentre']
+    pt2 = face['left_eyebrow']['barycentre']
+    center_x = int(round((pt1[0] + pt2[0]) / 2))
+    center_y = int(round((pt1[1] + pt2[1]) / 2))
+    return (center_x, center_y)
 
 while True:
     # Get frame
@@ -98,11 +121,10 @@ while True:
         shape = predictor(gray, rect)
         shape = face_utils.shape_to_np(shape)
 
-        dist2829 = round(dist.euclidean(shape[28],shape[29]))
-        dist2228 = round(dist.euclidean(shape[22], shape[28]))
-        dist2028 = round(dist.euclidean(shape[20], shape[28]))
-
-        # frame = face_utils.visualize_facial_landmarks(frame, shape)
+        if args['face']:
+            frame = face_utils.visualize_facial_landmarks(frame, shape)
+        else:
+            pass
 
         for (i, name) in enumerate(face.keys()):
             # For all points in face
@@ -129,7 +151,6 @@ while True:
                 face[name]['barycentre'] = (x, y)
                 font = cv2.FONT_HERSHEY_PLAIN
                 cv2.circle(frame, (x, y), 1, (0, 255, 0), -1)
-                cv2.putText(frame, name, (x, y), font, 0.5, (255,255,255), 1)
 
             # Print all points in face
             for k,v in face[name]['pts_list'].items():
@@ -137,140 +158,120 @@ while True:
                 cv2.circle(frame, (x, y), 1, (0, 0, 255), -1)
                 font = cv2.FONT_HERSHEY_PLAIN
                 cv2.putText(frame, str(k), (x, y), font, 1, (255,255,255), 1)
-
-        # Trace line between barycenter eyebrow
-        bc1 = face['right_eyebrow']['barycentre']
-        bc2 = face['left_eyebrow']['barycentre']
-        cv2.line(frame, bc1, bc2, (255, 0, 0), 1)
         
         # Center between eyebrow line
-        pt1 = face['right_eyebrow']['barycentre']
-        pt2 = face['left_eyebrow']['barycentre']
-        x_eyebrow = int(round((pt1[0] + pt2[0]) / 2))
-        y_eyebrow = int(round((pt1[1] + pt2[1]) / 2))
-        face['eyebrow']['centre'] = (x_eyebrow, y_eyebrow)
-        eyebrow = face['eyebrow']['centre']
-        cv2.circle(frame, eyebrow, 1, (0, 255, 0), -1)
-        font = cv2.FONT_HERSHEY_PLAIN
-        cv2.putText(frame, 'eyebrow', eyebrow, font, 1, (255,255,255), 1)
+        face['eyebrow']['centre'] = center_ligne(face['right_eyebrow']['barycentre'], face['left_eyebrow']['barycentre'])
+        cv2.circle(frame, face['eyebrow']['centre'], 1, (0, 255, 0), -1)
 
-        # Trace line between barycenter nose and center eyebrow line
-        nose = face['nose']['barycentre']
-        cv2.line(frame, nose, eyebrow, (255, 0, 0), 1)
-
-        dist_nose = int(round(sqrt((nose[0] - eyebrow[0]) ** 2 + (nose[1] - eyebrow[1]) ** 2)))
-        dist_eyebrow = int(round(sqrt((bc2[0] - bc1[0]) ** 2 + (bc2[1] - bc2[1]) ** 2)))
+        dist_nose = dist.euclidean(face['nose']['barycentre'], face['eyebrow']['centre'])
+        dist_eyebrow = dist.euclidean(face['right_eyebrow']['barycentre'], face['left_eyebrow']['barycentre'])
         ratio_eyebrow = round(dist_nose / dist_eyebrow, 5)
-        cv2.putText(frame, "Distance nose : %s " % str(dist_nose), (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
-        cv2.putText(frame, "Distance eyebrow : %s " % str(dist_eyebrow), (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
-        cv2.putText(frame, "Ratio : %s " % str(ratio_eyebrow), (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
-        cv2.putText(frame, "Distance 20/28 %s " % str(dist2028), (10, 270), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
-        cv2.putText(frame, "Distance 22/28 %s " % str(dist2228), (10, 300), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
-        cv2.putText(frame, "Distance 28/29 %s " % str(dist2829), (10, 330), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
-
+        cv2.putText(frame, "Ratio Eyebrow : %s " % str(ratio_eyebrow), (10, 30), FONT, 0.7, (0, 0, 0), 2)
 
         # Calculate EAR
-        leftEye = shape[lStart:lEnd]
-        rightEye = shape[rStart:rEnd]
-        leftEAR = eye_aspect_ratio(leftEye)
-        rightEAR = eye_aspect_ratio(rightEye)
-        ear = (leftEAR + rightEAR) / 2.0
-        cv2.putText(frame, "EAR: {:.2f}".format(ear), (10, 120), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+        ear = cal_ear()
+        cv2.putText(frame, "EAR : %s" % ear, (10, 60), FONT, 0.7, (0, 0, 0), 2)
 
+        dist2829 = round(dist.euclidean(shape[28],shape[29]))
+        dist2028 = round(dist.euclidean(shape[20], shape[28]))
         # Calculate ratio
         ratio20 = round(dist2028 / dist2829, 5)
-        ratio22 = round(dist2228 / dist2829, 5)
-        cv2.putText(frame, "ratio20 : %s" % str(ratio20), (10, 390), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
-        cv2.putText(frame, "ratio22 : %s" % str(ratio22), (10, 420), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+        cv2.putText(frame, "Ratio eyebrow / nose : %s" % str(ratio20), (10, 90), FONT, 0.7, (0, 0, 0), 2)
 
         # Alert when surprise
         if ratio_eyebrow >= RATIO_EYEBROW_SURPRISE and ear >= RATIO_EYE:
-            counter += 1
-            if counter >= FRAME_NB:
-                cv2.putText(frame, "Surprise !", (10, 180), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
-                if args['no_request']:
-                    print('===============================')
-                    print('No request !')
-                    print('Emotion : supris')
-                    print('Pila : %s' % pila_nb)
-                    print('===============================')
-                else:
-                    data = {
-                        'emotion': 'surpris',
-                        'pila': pila_nb
-                    }
-                    print('=============================')
-                    print('Request : %s' % URL)
-                    print('Data : %s' % data)
-                    print('=============================')
-                    requests.post('%s/emotion' % URL, data=data)
+            time_alarm_surpris += 1
+            if time_alarm_surpris >= FRAME_NB:
+                cv2.putText(frame, "Surprise !", (10, 300), FONT, 0.7, (0, 0, 255), 2)
+                if request_surpris:
+                    request_surpris = False
+                    if args['no_request']:
+                        print('===============================')
+                        print('No request !')
+                        print('Emotion : supris')
+                        print('Pila : %s' % pila_nb)
+                        print('===============================')
+                    else:
+                        data = {
+                            'emotion': 'surpris',
+                            'pila': pila_nb
+                        }
+                        print('=============================')
+                        print('Request : %s' % URL)
+                        print('Data : %s' % data)
+                        print('=============================')
+                        requests.post('%s/emotion' % URL, data=data)
         else:
-            counter = 0
-
-        # Print counter
-        cv2.putText(frame, "Counter : %s" % counter, (10, 150), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+            time_alarm_surpris = 0
+            request_surpris = True
 
         # Calculate angle for turn head
-        a = dist_points(face['left_eyebrow']['barycentre'], face['eyebrow']['centre'])
-        b = dist_points(face['eyebrow']['centre'], face['nose']['barycentre'])
-        c = dist_points(face['nose']['barycentre'], face['left_eyebrow']['barycentre'])
-
-        angle = degrees(acos((a ** 2 + b ** 2 - c ** 2) / (2 * a * b)))
-        cv2.putText(frame, "Angle : %s" % angle, (10, 210), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+        angle = round(measure_angle(face['left_eyebrow']['barycentre'], face['eyebrow']['centre'], face['nose']['barycentre']), 1)
+        cv2.putText(frame, "Angle : %s" % angle, (10, 210), FONT, 0.7, (0, 0, 0), 2)
 
         # Alert when head turn
         if angle < 90 - TURN_HEAD or angle > 90 + TURN_HEAD:
             time_alarm_turn += 1
-            cv2.putText(frame, "Head turn ! %s" % time_alarm_turn, (10, 240), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+            if time_alarm_turn >= 5:
+                cv2.putText(frame, "Head turn !", (10, 330), FONT, 0.7, (0, 0, 255), 2)
+                if request_turn:
+                    request_turn = False
+                    if args['no_request']:
+                        print('===============================')
+                        print('No request !')
+                        print('Emotion : headturn')
+                        print('Pila : %s' % pila_nb)
+                        print('===============================')
+                    else:
+                        data = {
+                            'emotion': 'headturn',
+                            'pila': pila_nb
+                        }
+                        print('=============================')
+                        print('Request : %s' % URL)
+                        print('Data : %s' % data)
+                        print('=============================')
+                        requests.post('%s/emotion' % URL, data=data)
+            else:
+                pass
         else:
             time_alarm_turn = 0
+            request_turn = True
 
-        if time_alarm_turn == 5:
-            if args['no_request']:
-                print('===============================')
-                print('No request !')
-                print('Emotion : headturn')
-                print('Pila : %s' % pila_nb)
-                print('===============================')
-            else:
-                data = {
-                    'emotion': 'headturn',
-                    'pila': pila_nb
-                }
-                print('=============================')
-                print('Request : %s' % URL)
-                print('Data : %s' % data)
-                print('=============================')
-                requests.post('%s/emotion' % URL, data=data)
-        else:
-            pass
 
         # Alert when concentre
         if ratio20 < RATIO_EYEBROW_FOCUS:
             time_alarm_focus += 1
-            cv2.putText(frame, "Concentre ! %s" % time_alarm_focus, (10, 450), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+            if time_alarm_focus >= 5:
+                cv2.putText(frame, "Concentre !", (10, 360), FONT, 0.7, (0, 0, 255), 2)
+                if request_focus:
+                    request_focus = False
+                    if args['no_request']:
+                        print('===============================')
+                        print('No request !')
+                        print('Emotion : concentre')
+                        print('Pila : %s' % pila_nb)
+                        print('===============================')
+                    else:
+                        data = {
+                            'emotion': 'concentre',
+                            'pila': pila_nb
+                        }
+                        print('=============================')
+                        print('Request : %s' % URL)
+                        print('Data : %s' % data)
+                        print('=============================')
+                        requests.post('%s/emotion' % URL, data=data)
+            else:
+                pass
         else:
             time_alarm_focus = 0
+            request_focus = True
+        
+        cv2.putText(frame, "Count surpris : %s" % time_alarm_surpris, (10, 120), FONT, 0.7, (0, 0, 0), 2)
+        cv2.putText(frame, "Count head turn : %s" % time_alarm_turn, (10, 150), FONT, 0.7, (0, 0, 0), 2)
+        cv2.putText(frame, "Count concentre : %s" % time_alarm_focus, (10, 180), FONT, 0.7, (0, 0, 0), 2)
 
-        if time_alarm_focus == 5:
-            if args['no_request']:
-                print('===============================')
-                print('No request !')
-                print('Emotion : concentre')
-                print('Pila : %s' % pila_nb)
-                print('===============================')
-            else:
-                data = {
-                    'emotion': 'concentre',
-                    'pila': pila_nb
-                }
-                print('=============================')
-                print('Request : %s' % URL)
-                print('Data : %s' % data)
-                print('=============================')
-                requests.post('%s/emotion' % URL, data=data)
-        else:
-            pass
 
     # Show the frame
     cv2.imshow("Frame", frame)
